@@ -79,8 +79,11 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib gamejam template");
     
     // TODO: Load resources / Initialize variables at this point
-    tex = LoadTexture("resources/DerpDude.png");    
-
+#if defined(PLATFORM_WEB)    
+    tex = LoadTexture("resources/DerpDude.png");
+#else
+    tex = LoadTexture("./src/resources/DerpDude.png");
+#endif
 
     // Render texture to draw full screen, enables screen scaling
     // NOTE: If screen is scaled, mouse input should be scaled proportionally
@@ -131,6 +134,19 @@ int main(void)
 //--------------------------------------------------------------------------------------------
 
 void UpdateDrawFrame(){
+        if(IsKeyPressed(KEY_A)){
+            tex_position.x -= 10.0f;
+        }
+        if(IsKeyPressed(KEY_D)){
+            tex_position.x += 10.0f;
+        }
+        if(IsKeyPressed(KEY_W)){
+            tex_position.y -= 10.0f;
+        }
+        if(IsKeyPressed(KEY_S)){
+            tex_position.y += 10.0f;
+        }    
+
     BeginDrawing();
         ClearBackground(WHITE);
         DrawText("HELLO", 100, 50, 24, BLACK);
