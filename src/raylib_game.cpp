@@ -54,7 +54,7 @@ typedef enum {
 static const int screenWidth = 720;
 static const int screenHeight = 720;
 static RenderTexture2D target = { 0 };  // Render texture to render our game
-static Texture2D tex = LoadTexture("./src/resources/DerpDude.png");
+static Texture2D tex = { 0 };
 static Vector2 tex_position{100.0f, 100.0f};
 
 // TODO: Define global variables here, recommended to make them static
@@ -79,7 +79,7 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib gamejam template");
     
     // TODO: Load resources / Initialize variables at this point
-    tex = LoadTexture("./src/resources/DerpDude.png");    
+    tex = LoadTexture("resources/DerpDude.png");    
 
 
     // Render texture to draw full screen, enables screen scaling
