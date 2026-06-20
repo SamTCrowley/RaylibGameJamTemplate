@@ -62,7 +62,7 @@ static RenderTexture2D target = { 0 };  // Render texture to render our game
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
-static void UpdateDrawFrame(void);      // Update and Draw one frame
+static void UpdateDrawFrame(Texture2D& texture, float x, float y);      // Update and Draw one frame
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -112,14 +112,8 @@ int main(void)
         if(IsKeyPressed(KEY_S)){
             tex_position.y += 10.0f;
         }
-        //UpdateDrawFrame();
-        BeginDrawing();
-        ClearBackground(WHITE);
-        DrawText("HELLO", 100, 50, 24, BLACK);
-        DrawRectangle(100, 100, 64, 64, RED);
-        DrawTexture(tex, tex_position.x, tex_position.y, WHITE);
-        EndDrawing();
         
+        UpdateDrawFrame(tex, tex_position.x, tex_position.y);        
     }
 #endif
 
@@ -138,4 +132,13 @@ int main(void)
 //--------------------------------------------------------------------------------------------
 // Module Functions Definition
 //--------------------------------------------------------------------------------------------
+
+void UpdateDrawFrame(Texture2D& texture, float x, float y){
+    BeginDrawing();
+        ClearBackground(WHITE);
+        DrawText("HELLO", 100, 50, 24, BLACK);
+        DrawRectangle(100, 100, 64, 64, RED);
+        DrawTexture(texture, x, y, WHITE);
+    EndDrawing();
+}
 
