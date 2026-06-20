@@ -25,6 +25,8 @@
 #include <stdlib.h>                         // Required for: 
 #include <string.h>                         // Required for: 
 
+#include "GUI.hpp"
+
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
@@ -58,6 +60,7 @@ static RenderTexture2D target = { 0 };  // Render texture to render our game
 static Texture2D tex = { 0 };
 static Vector2 tex_position{100.0f, 100.0f};
 static std::vector<Vector2> points = std::vector<Vector2>();
+static GUI_Element gui = GUI_Element("TEST", 200, 50, 100, 100);
 
 // TODO: Define global variables here, recommended to make them static
 
@@ -87,11 +90,6 @@ int main(void)
     tex = LoadTexture("./src/resources/DerpDude.png");
 #endif
 
-    // Render texture to draw full screen, enables screen scaling
-    // NOTE: If screen is scaled, mouse input should be scaled proportionally
-    //target = LoadRenderTexture(screenWidth, screenHeight);
-    //SetTextureFilter(target.texture, TEXTURE_FILTER_BILINEAR);
-
 #if defined(PLATFORM_WEB)
     emscripten_set_main_loop(UpdateDrawFrame, 60, 1);
 #else
@@ -101,19 +99,6 @@ int main(void)
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button
     {
-        if(IsKeyPressed(KEY_A)){
-            tex_position.x -= 10.0f;
-        }
-        if(IsKeyPressed(KEY_D)){
-            tex_position.x += 10.0f;
-        }
-        if(IsKeyPressed(KEY_W)){
-            tex_position.y -= 10.0f;
-        }
-        if(IsKeyPressed(KEY_S)){
-            tex_position.y += 10.0f;
-        }
-        
         UpdateDrawFrame();        
     }
 #endif
@@ -165,6 +150,7 @@ void UpdateDrawFrame(){
             }
         }
         DrawTexture(tex, tex_position.x, tex_position.y, WHITE);
+        gui.draw();
     EndDrawing();
 }
 
