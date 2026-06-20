@@ -20,6 +20,7 @@
 #endif
 
 #include <iostream>
+#include <vector>
 #include <stdio.h>                          // Required for: printf()
 #include <stdlib.h>                         // Required for: 
 #include <string.h>                         // Required for: 
@@ -56,6 +57,7 @@ static const int screenHeight = 720;
 static RenderTexture2D target = { 0 };  // Render texture to render our game
 static Texture2D tex = { 0 };
 static Vector2 tex_position{100.0f, 100.0f};
+static std::vector<Vector2> points = std::vector<Vector2>();
 
 // TODO: Define global variables here, recommended to make them static
 
@@ -145,12 +147,23 @@ void UpdateDrawFrame(){
         }
         if(IsKeyPressed(KEY_S)){
             tex_position.y += 10.0f;
-        }    
+        }
+
+        if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
+            points.push_back(GetMousePosition());
+        }
+        if(IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)){
+            points.clear();
+        }
 
     BeginDrawing();
         ClearBackground(WHITE);
         DrawText("HELLO", 100, 50, 24, BLACK);
-        DrawRectangle(100, 100, 64, 64, RED);
+        if(points.empty() == false){
+            for(Vector2 v : points){
+                DrawCircle(v.x, v.y, 5, RED);
+            }
+        }
         DrawTexture(tex, tex_position.x, tex_position.y, WHITE);
     EndDrawing();
 }
