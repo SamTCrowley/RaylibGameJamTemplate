@@ -53,8 +53,9 @@ typedef enum {
 //----------------------------------------------------------------------------------
 static const int screenWidth = 720;
 static const int screenHeight = 720;
-
 static RenderTexture2D target = { 0 };  // Render texture to render our game
+static Texture2D tex = LoadTexture("./src/resources/DerpDude.png");
+static Vector2 tex_position{100.0f, 100.0f};
 
 // TODO: Define global variables here, recommended to make them static
 
@@ -62,7 +63,7 @@ static RenderTexture2D target = { 0 };  // Render texture to render our game
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
-static void UpdateDrawFrame(Texture2D& texture, float x, float y);      // Update and Draw one frame
+static void UpdateDrawFrame();      // Update and Draw one frame
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -78,18 +79,13 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib gamejam template");
     
     // TODO: Load resources / Initialize variables at this point
-    
+    tex = LoadTexture("./src/resources/DerpDude.png");    
+
+
     // Render texture to draw full screen, enables screen scaling
     // NOTE: If screen is scaled, mouse input should be scaled proportionally
     //target = LoadRenderTexture(screenWidth, screenHeight);
     //SetTextureFilter(target.texture, TEXTURE_FILTER_BILINEAR);
-
-    Texture tex = LoadTexture("./src/resources/DerpDude.png");
-    if(IsTextureValid(tex) == false){
-        std::cout << "BAD TEXTURE!" << std::endl;
-    }
-    Vector2 tex_position{100.0f, 100.0f};
-    
 
 #if defined(PLATFORM_WEB)
     emscripten_set_main_loop(UpdateDrawFrame, 60, 1);
@@ -113,7 +109,7 @@ int main(void)
             tex_position.y += 10.0f;
         }
         
-        UpdateDrawFrame(tex, tex_position.x, tex_position.y);        
+        UpdateDrawFrame();        
     }
 #endif
 
@@ -122,6 +118,7 @@ int main(void)
     UnloadRenderTexture(target);
     
     // TODO: Unload all loaded resources at this point
+    UnloadTexture(tex);
 
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
@@ -133,12 +130,12 @@ int main(void)
 // Module Functions Definition
 //--------------------------------------------------------------------------------------------
 
-void UpdateDrawFrame(Texture2D& texture, float x, float y){
+void UpdateDrawFrame(){
     BeginDrawing();
         ClearBackground(WHITE);
         DrawText("HELLO", 100, 50, 24, BLACK);
         DrawRectangle(100, 100, 64, 64, RED);
-        DrawTexture(texture, x, y, WHITE);
+        DrawTexture(tex, tex_position.x, tex_position.y, WHITE);
     EndDrawing();
 }
 
