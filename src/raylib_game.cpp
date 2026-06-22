@@ -25,7 +25,7 @@
 #include <stdlib.h>                         // Required for: 
 #include <string.h>                         // Required for: 
 
-#include "GUI.hpp"
+#include "Gui.h"
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -58,9 +58,11 @@ static const int screenWidth = 720;
 static const int screenHeight = 720;
 static RenderTexture2D target = { 0 };  // Render texture to render our game
 static Texture2D tex = { 0 };
+static Font gui_font = { 0 };
 static Vector2 tex_position{100.0f, 100.0f};
 static std::vector<Vector2> points = std::vector<Vector2>();
-static GUI_Element gui = GUI_Element("TEST", 200, 50, 100, 100);
+GUI gui = GUI();
+Color dot_color = RED;
 
 // TODO: Define global variables here, recommended to make them static
 
@@ -86,9 +88,24 @@ int main(void)
     // TODO: Load resources / Initialize variables at this point
 #if defined(PLATFORM_WEB)    
     tex = LoadTexture("resources/DerpDude.png");
+    gui_font = LoadFont("resources/ConsolaMono-Bold.ttf");
 #else
     tex = LoadTexture("./src/resources/DerpDude.png");
+    gui_font = LoadFont("./src/resources/ConsolaMono-Bold.ttf");
 #endif
+
+gui.font = gui_font;
+    gui.add_element(PANEL, "RootPanel", "NULLPTR", 100, 50, 160, 30, {});
+    gui.add_element(BUTTON, "Button1", "RootPanel", 0, 0, 160, 30, {{"text", "CHANGE DOT COLOR"}, {"red", "255"}, {"green", "0"}, {"blue", "0"}});
+    ((GUI_Button*)gui.elements["Button1"])->func = [](){
+        dot_color.r = std::rand() % 255;
+        dot_color.g = std::rand() % 255;
+        dot_color.b = std::rand() % 255;
+    };
+
+
+
+
 
 #if defined(PLATFORM_WEB)
     emscripten_set_main_loop(UpdateDrawFrame, 60, 1);
@@ -141,12 +158,13 @@ void UpdateDrawFrame(){
             points.clear();
         }
 
+        gui.update();
+
     BeginDrawing();
         ClearBackground(WHITE);
-        DrawText("HELLO", 100, 50, 24, BLACK);
         if(points.empty() == false){
             for(Vector2 v : points){
-                DrawCircle(v.x, v.y, 5, RED);
+                DrawCircle(v.x, v.y, 5, dot_color);
             }
         }
         DrawTexture(tex, tex_position.x, tex_position.y, WHITE);
