@@ -58,6 +58,9 @@ typedef enum {
 static const int screenWidth = 720;
 static const int screenHeight = 720;
 static RenderTexture2D target = { 0 };  // Render texture to render our game
+Shader post_process_shader = { 0 };
+int ppshader_resLoc = 0;
+float ppshader_res[2];
 static Texture2D wall_textures = { 0 };
 static Font gui_font = { 0 };
 Camera cam = {0};
@@ -90,11 +93,33 @@ int main(void)
     // TODO: Load resources / Initialize variables at this point
 #if defined(PLATFORM_WEB)    
     wall_textures = LoadTexture("resources/textures.png");
+    wall_textures = LoadTextureFromImage(img);
+    SetTextureFilter(wall_textures, TEXTURE_FILTER_POINT);
+    SetTextureWrap(wall_textures, TEXTURE_WRAP_CLAMP);
+    UnloadImage(img);
     gui_font = LoadFont("resources/ConsolaMono-Bold.ttf");
+    post_process_shader = LoadShader(0, "resources/PostProcessWeb.frag");
+    ppshader_resLoc = GetShaderLocation(post_process_shader, "resolution");
+    ppshader_res[0] = (float)screenWidth;
+    ppshader_res[1] = (float)screenHeight;
+    SetShaderValue(post_process_shader, ppshader_resLoc, ppshader_res, SHADER_UNIFORM_VEC2);
 #else
-    wall_textures = LoadTexture("./resources/textures.png");
+    Image img = LoadImage("./resources/textures.png");
+    ImageMipmaps(&img);
+    wall_textures = LoadTextureFromImage(img);
+    SetTextureFilter(wall_textures, TEXTURE_FILTER_POINT);
+    SetTextureWrap(wall_textures, TEXTURE_WRAP_CLAMP);
+    UnloadImage(img);
     gui_font = LoadFont("./resources/ConsolaMono-Bold.ttf");
+    post_process_shader = LoadShader(0, "./resources/PostProcess.frag");
+    ppshader_resLoc = GetShaderLocation(post_process_shader, "resolution");
+    ppshader_res[0] = (float)screenWidth;
+    ppshader_res[1] = (float)screenHeight;
+    SetShaderValue(post_process_shader, ppshader_resLoc, ppshader_res, SHADER_UNIFORM_VEC2);
+    
 #endif
+
+    target = LoadRenderTexture(screenWidth, screenHeight);
 
     gui.font = gui_font;
     gui.add_element(PANEL, "RootPanel", "NULLPTR", 100, 50, 160, 30, {});
@@ -147,12 +172,17 @@ int main(void)
 
 void UpdateDrawFrame(){
     cam.target = Vector3Add(Vector3RotateByAxisAngle(Vector3Subtract(cam.target, cam.position), cam.up, 0.33f * DEG2RAD), cam.position);
-    BeginDrawing();
+    BeginTextureMode(target);
         ClearBackground(GRAY);
-        
         BeginMode3D(cam);
             DrawModel(grid_model, Vector3Zeros, 1.0f, WHITE);
         EndMode3D();
+    EndTextureMode();
+    BeginDrawing();    
+    BeginShaderMode(post_process_shader);
+            ClearBackground(BLACK);
+            DrawTextureRec(target.texture, Rectangle{0.0f, 0.0f, 720.0f, -720.0f}, Vector2{0.0f, 0.0f}, WHITE);
+        EndShaderMode();
     EndDrawing();
 }
 
