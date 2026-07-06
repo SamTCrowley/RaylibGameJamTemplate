@@ -61,6 +61,7 @@ static Texture2D tex = { 0 };
 static Font gui_font = { 0 };
 static Vector2 tex_position{100.0f, 100.0f};
 static std::vector<Vector2> points = std::vector<Vector2>();
+Camera cam = {0};
 GUI gui = GUI();
 Color dot_color = RED;
 
@@ -94,7 +95,7 @@ int main(void)
     gui_font = LoadFont("./src/resources/ConsolaMono-Bold.ttf");
 #endif
 
-gui.font = gui_font;
+    gui.font = gui_font;
     gui.add_element(PANEL, "RootPanel", "NULLPTR", 100, 50, 160, 30, {});
     gui.add_element(BUTTON, "Button1", "RootPanel", 0, 0, 160, 30, {{"text", "CHANGE DOT COLOR"}, {"red", "255"}, {"green", "0"}, {"blue", "0"}});
     ((GUI_Button*)gui.elements["Button1"])->func = [](){
@@ -104,7 +105,9 @@ gui.font = gui_font;
     };
 
 
-
+    cam = Camera3D();
+    cam.position = Vector3{-5.0f, 0.0f, 0.0f};
+    cam.target = Vector3{0.0f, 0.0f, 0.0f};
 
 
 #if defined(PLATFORM_WEB)
@@ -162,6 +165,10 @@ void UpdateDrawFrame(){
 
     BeginDrawing();
         ClearBackground(WHITE);
+        BeginMode3D(cam);
+        DrawCube(Vector3{0.0f, 0.0f, 0.0f}, 1.0f, 1.0f, 1.0f, BLUE);
+        DrawCubeWires(Vector3{0.0f, 0.0f, 0.0f}, 1.0f, 1.0f, 1.0f, BLACK);
+        EndMode3D();
         if(points.empty() == false){
             for(Vector2 v : points){
                 DrawCircle(v.x, v.y, 5, dot_color);
