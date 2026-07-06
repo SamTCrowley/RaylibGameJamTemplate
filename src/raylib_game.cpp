@@ -26,6 +26,7 @@
 #include <string.h>                         // Required for: 
 
 #include "Gui.h"
+#include "BlockGrid.h"
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -57,13 +58,13 @@ typedef enum {
 static const int screenWidth = 720;
 static const int screenHeight = 720;
 static RenderTexture2D target = { 0 };  // Render texture to render our game
-static Texture2D tex = { 0 };
+static Texture2D wall_textures = { 0 };
 static Font gui_font = { 0 };
-static Vector2 tex_position{100.0f, 100.0f};
-static std::vector<Vector2> points = std::vector<Vector2>();
 Camera cam = {0};
 GUI gui = GUI();
 Color dot_color = RED;
+BlockGrid grid = BlockGrid();
+Model grid_model = {0};
 
 // TODO: Define global variables here, recommended to make them static
 
@@ -88,11 +89,11 @@ int main(void)
     
     // TODO: Load resources / Initialize variables at this point
 #if defined(PLATFORM_WEB)    
-    tex = LoadTexture("resources/DerpDude.png");
+    wall_textures = LoadTexture("resources/textures.png");
     gui_font = LoadFont("resources/ConsolaMono-Bold.ttf");
 #else
-    tex = LoadTexture("./src/resources/DerpDude.png");
-    gui_font = LoadFont("./src/resources/ConsolaMono-Bold.ttf");
+    wall_textures = LoadTexture("./resources/textures.png");
+    gui_font = LoadFont("./resources/ConsolaMono-Bold.ttf");
 #endif
 
     gui.font = gui_font;
@@ -104,11 +105,14 @@ int main(void)
         dot_color.b = std::rand() % 255;
     };
 
-    cam.position = Vector3{-5.0f, 3.0f, 5.0f};
-    cam.target = Vector3{0.0f, 0.0f, 0.0f};
+    cam.position = Vector3{8.5f, 0.5f, 8.5f};
+    cam.target = Vector3{8.0f, 0.5f, 0.0f};
     cam.up = Vector3{0.0f, 1.0f, 0.0f};
     cam.fovy = 45.0f;
     cam.projection = CAMERA_PERSPECTIVE;
+
+    grid_model = grid.build_model();
+    grid_model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = wall_textures;
 
 #if defined(PLATFORM_WEB)
     emscripten_set_main_loop(UpdateDrawFrame, 60, 1);
@@ -128,7 +132,8 @@ int main(void)
     UnloadRenderTexture(target);
     
     // TODO: Unload all loaded resources at this point
-    UnloadTexture(tex);
+    UnloadTexture(wall_textures);
+    UnloadModel(grid_model);
 
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
@@ -141,43 +146,13 @@ int main(void)
 //--------------------------------------------------------------------------------------------
 
 void UpdateDrawFrame(){
-        if(IsKeyPressed(KEY_A)){
-            tex_position.x -= 10.0f;
-        }
-        if(IsKeyPressed(KEY_D)){
-            tex_position.x += 10.0f;
-        }
-        if(IsKeyPressed(KEY_W)){
-            tex_position.y -= 10.0f;
-        }
-        if(IsKeyPressed(KEY_S)){
-            tex_position.y += 10.0f;
-        }
-
-        if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
-            points.push_back(GetMousePosition());
-        }
-        if(IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)){
-            points.clear();
-        }
-
-        gui.update();
-
+    cam.target = Vector3Add(Vector3RotateByAxisAngle(Vector3Subtract(cam.target, cam.position), cam.up, 0.33f * DEG2RAD), cam.position);
     BeginDrawing();
-        ClearBackground(WHITE);
+        ClearBackground(GRAY);
         
         BeginMode3D(cam);
-            DrawCube(Vector3{0.0f, 0.0f, 0.0f}, 1.0f, 1.0f, 1.0f, BLUE);
-            DrawCubeWires(Vector3{0.0f, 0.0f, 0.0f}, 1.0f, 1.0f, 1.0f, BLACK);
+            DrawModel(grid_model, Vector3Zeros, 1.0f, WHITE);
         EndMode3D();
-
-        if(points.empty() == false){
-            for(Vector2 v : points){
-                DrawCircle(v.x, v.y, 5, dot_color);
-            }
-        }
-        DrawTexture(tex, tex_position.x, tex_position.y, WHITE);
-        gui.draw();
     EndDrawing();
 }
 
