@@ -104,11 +104,11 @@ int main(void)
         dot_color.b = std::rand() % 255;
     };
 
-
-    cam = Camera3D();
-    cam.position = Vector3{-5.0f, 0.0f, 0.0f};
+    cam.position = Vector3{-5.0f, 3.0f, 5.0f};
     cam.target = Vector3{0.0f, 0.0f, 0.0f};
-
+    cam.up = Vector3{0.0f, 1.0f, 0.0f};
+    cam.fovy = 45.0f;
+    cam.projection = CAMERA_PERSPECTIVE;
 
 #if defined(PLATFORM_WEB)
     emscripten_set_main_loop(UpdateDrawFrame, 60, 1);
@@ -165,10 +165,12 @@ void UpdateDrawFrame(){
 
     BeginDrawing();
         ClearBackground(WHITE);
+        
         BeginMode3D(cam);
-        DrawCube(Vector3{0.0f, 0.0f, 0.0f}, 1.0f, 1.0f, 1.0f, BLUE);
-        DrawCubeWires(Vector3{0.0f, 0.0f, 0.0f}, 1.0f, 1.0f, 1.0f, BLACK);
+            DrawCube(Vector3{0.0f, 0.0f, 0.0f}, 1.0f, 1.0f, 1.0f, BLUE);
+            DrawCubeWires(Vector3{0.0f, 0.0f, 0.0f}, 1.0f, 1.0f, 1.0f, BLACK);
         EndMode3D();
+
         if(points.empty() == false){
             for(Vector2 v : points){
                 DrawCircle(v.x, v.y, 5, dot_color);
