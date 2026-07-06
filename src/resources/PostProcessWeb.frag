@@ -1,9 +1,11 @@
-#version 100 precision mediump float;
+#version 100
+precision mediump float;
 
 varying vec2 fragTexCoord;
-uniform sampler2D texture0; uniform vec2 resolution;
+uniform sampler2D texture0;
+uniform vec2 resolution;
 
-void main() { 
+void main(){
     vec2 texel = 1.0 / resolution;
     vec4 color = texture2D(texture0, fragTexCoord);
     color += texture2D(texture0, fragTexCoord + vec2(texel.x, 0.0));
