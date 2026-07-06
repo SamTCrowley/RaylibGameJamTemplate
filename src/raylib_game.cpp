@@ -92,7 +92,8 @@ int main(void)
     
     // TODO: Load resources / Initialize variables at this point
 #if defined(PLATFORM_WEB)    
-    wall_textures = LoadTexture("resources/textures.png");
+    Image img = LoadImage("resources/textures.png");
+    ImageMipmaps(&img);
     wall_textures = LoadTextureFromImage(img);
     SetTextureFilter(wall_textures, TEXTURE_FILTER_POINT);
     SetTextureWrap(wall_textures, TEXTURE_WRAP_CLAMP);
