@@ -18,6 +18,7 @@ class Player{
     Vector3 forward = Vector3{1.0f, 0.0f, 0.0f};
     Vector3 right = Vector3{0.0f, 0.0f, 1.0f};
     Vector3 up = Vector3{0.0f, 1.0f, 0.0f};
+    bool mouse_lock = true;
 
     Player(BlockGrid* bg);
     void update(float time);

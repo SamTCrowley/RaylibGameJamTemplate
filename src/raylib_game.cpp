@@ -63,10 +63,14 @@ Shader post_process_shader = { 0 };
 int ppshader_resLoc = 0;
 float ppshader_res[2];
 static Texture2D wall_textures = { 0 };
+static Texture2D cursor_textures = { 0 };
+enum CURSOR_MODE{CURSOR_HAND, CURSOR_GRAB, CURSOR_POINT};
+CURSOR_MODE cursor_mode = CURSOR_POINT;
+Rectangle cursor_draw_src{0.0f, 0.0f, 8.0f, 8.0f};
+Rectangle cursor_draw_dst{0.0f, 0.0f, 16.0f, 16.0f};
 static Font gui_font = { 0 };
 Camera cam = {0};
 GUI gui = GUI();
-Color dot_color = RED;
 BlockGrid grid = BlockGrid();
 Model grid_model = {0};
 Player player = Player(nullptr);
@@ -78,7 +82,7 @@ Player player = Player(nullptr);
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
 static void UpdateDrawFrame();      // Update and Draw one frame
-
+static void UpdateCursor();
 //------------------------------------------------------------------------------------
 // Program main entry point
 //------------------------------------------------------------------------------------
@@ -92,6 +96,7 @@ int main(void)
     //--------------------------------------------------------------------------------------
     InitWindow(screenWidth, screenHeight, "raylib gamejam template");
     DisableCursor();
+    HideCursor();
     
     // TODO: Load resources / Initialize variables at this point
 #if defined(PLATFORM_WEB)    
@@ -101,6 +106,7 @@ int main(void)
     SetTextureFilter(wall_textures, TEXTURE_FILTER_POINT);
     SetTextureWrap(wall_textures, TEXTURE_WRAP_CLAMP);
     UnloadImage(img);
+    cursor_textures = LoadTexture("resources/cursors.png");
     gui_font = LoadFont("resources/ConsolaMono-Bold.ttf");
     post_process_shader = LoadShader(0, "resources/PostProcessWeb.frag");
     ppshader_resLoc = GetShaderLocation(post_process_shader, "resolution");
@@ -114,6 +120,7 @@ int main(void)
     SetTextureFilter(wall_textures, TEXTURE_FILTER_POINT);
     SetTextureWrap(wall_textures, TEXTURE_WRAP_CLAMP);
     UnloadImage(img);
+    cursor_textures = LoadTexture("./resources/cursors.png");
     gui_font = LoadFont("./resources/ConsolaMono-Bold.ttf");
     post_process_shader = LoadShader(0, "./resources/PostProcess.frag");
     ppshader_resLoc = GetShaderLocation(post_process_shader, "resolution");
@@ -125,14 +132,14 @@ int main(void)
 
     target = LoadRenderTexture(screenWidth, screenHeight);
 
+    /*
     gui.font = gui_font;
     gui.add_element(PANEL, "RootPanel", "NULLPTR", 100, 50, 160, 30, {});
     gui.add_element(BUTTON, "Button1", "RootPanel", 0, 0, 160, 30, {{"text", "CHANGE DOT COLOR"}, {"red", "255"}, {"green", "0"}, {"blue", "0"}});
     ((GUI_Button*)gui.elements["Button1"])->func = [](){
-        dot_color.r = std::rand() % 255;
-        dot_color.g = std::rand() % 255;
-        dot_color.b = std::rand() % 255;
+
     };
+    */
 
     grid_model = grid.build_model();
     grid_model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = wall_textures;
@@ -177,18 +184,42 @@ int main(void)
 //--------------------------------------------------------------------------------------------
 // Module Functions Definition
 //--------------------------------------------------------------------------------------------
+void UpdateCursor(){
+    // update cursor stuff...
+    if(IsMouseButtonDown(MOUSE_BUTTON_LEFT)){
+        cursor_mode = CURSOR_GRAB;
+    }else{
+        cursor_mode = CURSOR_POINT;
+    }
+    switch(cursor_mode){
+        case CURSOR_HAND: cursor_draw_src = Rectangle{0.0f, 0.0f, 8.0f, 8.0f}; break;
+        case CURSOR_GRAB: cursor_draw_src = Rectangle{8.0f, 0.0f, 8.0f, 8.0f}; break;
+        case CURSOR_POINT: cursor_draw_src = Rectangle{16.0f, 0.0f, 8.0f, 8.0f}; break;
+        default: cursor_draw_src = Rectangle{0.0f, 0.0f, 8.0f, 8.0f}; break;
+    }
+    Vector2 mouse_position = GetMousePosition();
+    cursor_draw_dst = Rectangle{mouse_position.x - 8.0f, mouse_position.y - 8.0f, 16.0f, 16.0f};
+}
+
 
 void UpdateDrawFrame(){
     float time = GetFrameTime();
     player.update(time);
     cam.position = player.position;
     cam.target = Vector3Add(player.position, player.forward);
+    
+    UpdateCursor();
+
+    // rendering...
     BeginTextureMode(target);
         ClearBackground(GRAY);
         BeginMode3D(cam);
             DrawModel(grid_model, Vector3Zeros, 1.0f, WHITE);
         EndMode3D();
         DrawText(TextFormat("COLLISION: %s", grid.player_collision(player.position, player.velocity, player.radius) ? "TRUE" : "FALSE"), 10, 10, 16, BLACK);
+        if(player.mouse_lock == false){
+            DrawTexturePro(cursor_textures, cursor_draw_src, cursor_draw_dst, Vector2{0.0f, 0.0f}, 0.0f, WHITE);
+        }
     EndTextureMode();
     BeginDrawing();    
     BeginShaderMode(post_process_shader);
