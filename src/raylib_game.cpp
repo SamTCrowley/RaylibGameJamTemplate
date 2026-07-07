@@ -27,6 +27,7 @@
 
 #include "Gui.h"
 #include "BlockGrid.h"
+#include "Player.h"
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -68,6 +69,7 @@ GUI gui = GUI();
 Color dot_color = RED;
 BlockGrid grid = BlockGrid();
 Model grid_model = {0};
+Player player = Player(nullptr);
 
 // TODO: Define global variables here, recommended to make them static
 
@@ -89,6 +91,7 @@ int main(void)
     // Initialization
     //--------------------------------------------------------------------------------------
     InitWindow(screenWidth, screenHeight, "raylib gamejam template");
+    DisableCursor();
     
     // TODO: Load resources / Initialize variables at this point
 #if defined(PLATFORM_WEB)    
@@ -131,14 +134,18 @@ int main(void)
         dot_color.b = std::rand() % 255;
     };
 
-    cam.position = Vector3{8.5f, 0.5f, 8.5f};
-    cam.target = Vector3{8.0f, 0.5f, 0.0f};
+    grid_model = grid.build_model();
+    grid_model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = wall_textures;
+
+    player = Player(&grid);
+
+    cam.position = player.position;
+    cam.target = Vector3Add(player.position, player.forward);
     cam.up = Vector3{0.0f, 1.0f, 0.0f};
     cam.fovy = 45.0f;
     cam.projection = CAMERA_PERSPECTIVE;
 
-    grid_model = grid.build_model();
-    grid_model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = wall_textures;
+    
 
 #if defined(PLATFORM_WEB)
     emscripten_set_main_loop(UpdateDrawFrame, 60, 1);
@@ -172,12 +179,16 @@ int main(void)
 //--------------------------------------------------------------------------------------------
 
 void UpdateDrawFrame(){
-    cam.target = Vector3Add(Vector3RotateByAxisAngle(Vector3Subtract(cam.target, cam.position), cam.up, 0.33f * DEG2RAD), cam.position);
+    float time = GetFrameTime();
+    player.update(time);
+    cam.position = player.position;
+    cam.target = Vector3Add(player.position, player.forward);
     BeginTextureMode(target);
         ClearBackground(GRAY);
         BeginMode3D(cam);
             DrawModel(grid_model, Vector3Zeros, 1.0f, WHITE);
         EndMode3D();
+        DrawText(TextFormat("COLLISION: %s", grid.player_collision(player.position, player.velocity, player.radius) ? "TRUE" : "FALSE"), 10, 10, 16, BLACK);
     EndTextureMode();
     BeginDrawing();    
     BeginShaderMode(post_process_shader);

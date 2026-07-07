@@ -25,7 +25,7 @@ BlockGrid::BlockGrid(){
     block_texes = std::vector<TexList>();
     for(int i = 0; i < blocks_wide * blocks_long; i++){
         blocks.push_back(0);
-        block_texes.push_back(TexList(1, 0, 2, 2, 2, 3));
+        block_texes.push_back(TexList(1, 0, 2, 2, 2, 2));
     }
     for(int i = 0; i < blocks_long; i++){
         for(int j = 0; j < blocks_wide; j++){
@@ -36,10 +36,35 @@ BlockGrid::BlockGrid(){
             }
         }
     }
-
-    std::cout << "BlockGrid constructor done..." << std::endl;
 }
 
+bool BlockGrid::collision_at_point(Vector3 point){
+    // check if the block at point is solid or not.
+    // get j from x and i from z
+    int j = std::floor(point.x);
+    int i = std::floor(point.z);
+    int b = blocks[i * blocks_wide + j];
+    return b > 0;
+}
+
+bool BlockGrid::player_collision(Vector3 position, Vector3 velocity, float radius){
+    // get i and j from position
+    int I = std::floor(position.z + velocity.z);
+    int J = std::floor(position.x + velocity.x);
+    // iterate through blocks around that point and check for collisions
+    for(int i = std::max(0, I - 1); i <= std::min(blocks_long, I + 1); i++){
+        for(int j = std::max(0, J - 1); j <= std::min(blocks_wide, J + 1); j++){
+            if(blocks[i * blocks_wide + j] > 0){
+                // check for collision between player circle and block rectangle
+                Rectangle rec{(float)j, (float)i, 1.0f, 1.0f};
+                if(CheckCollisionCircleRec(Vector2{position.x + velocity.x, position.z + velocity.z}, radius, rec) == true){
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
 
 Model BlockGrid::build_model(){
     // build mesh of blocks...
@@ -72,7 +97,7 @@ Model BlockGrid::build_model(){
             float x = j * 1.0f;
             float y = 0.0f;
             float z = i * 1.0f;
-            if(b == 0){
+            if(b == 0){ // empty block
                 // floor
                 float tex_x = (float)(tex.B % tiles_wide);
                 float tex_y = (float)(tex.B / tiles_wide);
@@ -214,7 +239,7 @@ Model BlockGrid::build_model(){
                 mesh.normals[n++] = 0.0f;
                 
             }
-            if(b == 1){
+            if(b == 1){ // solid block
                 // south wall
                 float tex_x = (float)(tex.S % tiles_wide);
                 float tex_y = (float)(tex.S / tiles_wide);
@@ -497,5 +522,4 @@ Model BlockGrid::build_model(){
     UploadMesh(&mesh, false);
     Model model = LoadModelFromMesh(mesh);
     return model;
-    
 }
