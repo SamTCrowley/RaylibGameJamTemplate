@@ -24,12 +24,12 @@ struct TexList{
 
 class BlockGrid{
     public:
-    int blocks_wide;
-    int blocks_long;
-    float tile_size;
-    float atlas_size;
-    int tiles_wide;
-    float inset;
+    int blocks_wide = 16;
+    int blocks_long = 16;
+    float tile_size = 16.0f;
+    float atlas_size = 256.0f;
+    int tiles_wide = 16;
+    float inset = 0.5f / atlas_size;
     std::vector<int> blocks;
     std::vector<TexList> block_texes;
     std::vector<Vector3> cube_coords;
