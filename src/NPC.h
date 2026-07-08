@@ -47,7 +47,7 @@ class NPC{
     NPC_STATE current_state = NPC_IDLE;
 
     // NPC speech stuff...
-    RenderTexture2D speech_bubble = LoadRenderTexture(150, 50);
+    RenderTexture2D speech_bubble = LoadRenderTexture(128, 64);
     Font* font = nullptr;
     int font_size = 12;
     std::string name = "NAME";
