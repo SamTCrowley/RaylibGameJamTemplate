@@ -1,4 +1,5 @@
 #include "Player.h"
+#include "NPC.h"
 
 Player::Player(BlockGrid* bg){
     grid = bg;
@@ -6,7 +7,7 @@ Player::Player(BlockGrid* bg){
     right = Vector3RotateByAxisAngle(right, up, angle * DEG2RAD);
 }
 
-void Player::update(float time){
+void Player::update(float time, std::vector<NPC*>& list){
     // get user input
     // if space is down, disable movement, but allow cursor.
     if(IsKeyPressed(KEY_SPACE)){
@@ -44,19 +45,50 @@ void Player::update(float time){
         velocity = Vector3Scale(velocity, max_speed * time);
 
         // check for collisions...
-        if(grid->player_collision(position, Vector3{velocity.x, 0.0f, 0.0f}, radius) == true){
-            while(grid->player_collision(Vector3{position.x + std::copysign(0.1f, velocity.x), position.y, position.z}, Vector3{0.0f, 0.0f, 0.0f}, radius) == true){
+        Vector3 collision_point{position.x + velocity.x, position.y, position.z};
+        if(collision_check(collision_point, list)){
+            collision_point.x = position.x + std::copysign(0.1f, velocity.x);
+            while(collision_check(collision_point, list) == true){
                 if(std::abs(velocity.x) <= 0.01f){ velocity.x = 0.0f; break; }
                 velocity.x -= std::copysign(0.01f, velocity.x);
+                collision_point.x = position.x + std::copysign(0.1f, velocity.x);
             }
         }
         velocity.y = 0.0f; // Y velocity should always be 0?
-        if(grid->player_collision(position, Vector3{0.0f, 0.0f, velocity.z}, radius) == true){
-            while(grid->player_collision(Vector3{position.x, position.y, position.z + std::copysign(0.1f, velocity.z)}, Vector3{0.0f, 0.0f, 0.0f}, radius) == true){
+        collision_point = Vector3{position.x, position.y, position.z + velocity.z};
+        if(collision_check(collision_point, list)){
+            collision_point.z = position.z + std::copysign(0.1f, velocity.z);
+            while(collision_check(collision_point, list) == true){
                 if(std::abs(velocity.z) <= 0.01f){ velocity.z = 0.0f; break; }
                 velocity.z -= std::copysign(0.01f, velocity.z);
+                collision_point.z = position.z + std::copysign(0.1f, velocity.z);
             }
         }
+
         position = Vector3Add(position, velocity);
     }
+}
+
+bool Player::entity_collision(Vector3 point, std::vector<NPC*>& list){
+    // check if this NPC collides with other NPCs
+    // all of these collisions are based on circle collisions...
+    Vector2 vec;
+    float mag2;
+    float limit;
+    // check NPCs...
+    for(NPC* other : list){
+        vec.x = other->position.x - point.x;
+        vec.y = other->position.z - point.z;
+        mag2 = Vector2LengthSqr(vec);
+        limit = (radius + other->radius) * (radius + other->radius);
+        if(mag2 <= limit){ return true; }
+    }
+
+    return false;
+}
+
+bool Player::collision_check(Vector3 point, std::vector<NPC*>& list){
+    bool grid_check = grid->entity_collision(point, radius);
+    bool entity_check = entity_collision(point, list);
+    return grid_check || entity_check;
 }

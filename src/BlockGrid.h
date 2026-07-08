@@ -37,6 +37,6 @@ class BlockGrid{
     BlockGrid();
     Model build_model();
     bool collision_at_point(Vector3 point);
-    bool player_collision(Vector3 position, Vector3 velocity, float radius);
+    bool entity_collision(Vector3 position, float radius);
 
 };

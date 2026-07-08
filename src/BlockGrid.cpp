@@ -47,17 +47,17 @@ bool BlockGrid::collision_at_point(Vector3 point){
     return b > 0;
 }
 
-bool BlockGrid::player_collision(Vector3 position, Vector3 velocity, float radius){
+bool BlockGrid::entity_collision(Vector3 position, float radius){
     // get i and j from position
-    int I = std::floor(position.z + velocity.z);
-    int J = std::floor(position.x + velocity.x);
+    int I = std::floor(position.z);
+    int J = std::floor(position.x);
     // iterate through blocks around that point and check for collisions
     for(int i = std::max(0, I - 1); i <= std::min(blocks_long, I + 1); i++){
         for(int j = std::max(0, J - 1); j <= std::min(blocks_wide, J + 1); j++){
             if(blocks[i * blocks_wide + j] > 0){
                 // check for collision between player circle and block rectangle
                 Rectangle rec{(float)j, (float)i, 1.0f, 1.0f};
-                if(CheckCollisionCircleRec(Vector2{position.x + velocity.x, position.z + velocity.z}, radius, rec) == true){
+                if(CheckCollisionCircleRec(Vector2{position.x, position.z}, radius, rec) == true){
                     return true;
                 }
             }

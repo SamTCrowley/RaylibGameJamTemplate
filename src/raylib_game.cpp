@@ -19,6 +19,7 @@
     #include <emscripten/emscripten.h>      // Emscripten library - LLVM to JavaScript compiler
 #endif
 
+#include <string>
 #include <iostream>
 #include <vector>
 #include <stdio.h>                          // Required for: printf()
@@ -28,6 +29,8 @@
 #include "Gui.h"
 #include "BlockGrid.h"
 #include "Player.h"
+#include "NPC.h"
+#include "Anim.h"
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -62,8 +65,10 @@ static RenderTexture2D target = { 0 };  // Render texture to render our game
 Shader post_process_shader = { 0 };
 int ppshader_resLoc = 0;
 float ppshader_res[2];
+Shader alpha_discard_shader = { 0 };
 static Texture2D wall_textures = { 0 };
 static Texture2D cursor_textures = { 0 };
+static Texture2D devil_texture_1 = { 0 };
 enum CURSOR_MODE{CURSOR_HAND, CURSOR_GRAB, CURSOR_POINT};
 CURSOR_MODE cursor_mode = CURSOR_POINT;
 Rectangle cursor_draw_src{0.0f, 0.0f, 8.0f, 8.0f};
@@ -74,6 +79,7 @@ GUI gui = GUI();
 BlockGrid grid = BlockGrid();
 Model grid_model = {0};
 Player player = Player(nullptr);
+std::vector<NPC*> NPC_list = std::vector<NPC*>();
 
 // TODO: Define global variables here, recommended to make them static
 
@@ -96,7 +102,6 @@ int main(void)
     //--------------------------------------------------------------------------------------
     InitWindow(screenWidth, screenHeight, "raylib gamejam template");
     DisableCursor();
-    HideCursor();
     
     // TODO: Load resources / Initialize variables at this point
 #if defined(PLATFORM_WEB)    
@@ -107,12 +112,14 @@ int main(void)
     SetTextureWrap(wall_textures, TEXTURE_WRAP_CLAMP);
     UnloadImage(img);
     cursor_textures = LoadTexture("resources/cursors.png");
+    devil_texture_1 = LoadTexture("resources/Devil_1.png");
     gui_font = LoadFont("resources/ConsolaMono-Bold.ttf");
     post_process_shader = LoadShader(0, "resources/PostProcessWeb.frag");
     ppshader_resLoc = GetShaderLocation(post_process_shader, "resolution");
     ppshader_res[0] = (float)screenWidth;
     ppshader_res[1] = (float)screenHeight;
     SetShaderValue(post_process_shader, ppshader_resLoc, ppshader_res, SHADER_UNIFORM_VEC2);
+    alpha_discard_shader = LoadShader(0, "resources/alphadiscardWeb.fs");
 #else
     Image img = LoadImage("./resources/textures.png");
     ImageMipmaps(&img);
@@ -121,13 +128,14 @@ int main(void)
     SetTextureWrap(wall_textures, TEXTURE_WRAP_CLAMP);
     UnloadImage(img);
     cursor_textures = LoadTexture("./resources/cursors.png");
+    devil_texture_1 = LoadTexture("./resources/Devil_1.png");
     gui_font = LoadFont("./resources/ConsolaMono-Bold.ttf");
     post_process_shader = LoadShader(0, "./resources/PostProcess.frag");
     ppshader_resLoc = GetShaderLocation(post_process_shader, "resolution");
     ppshader_res[0] = (float)screenWidth;
     ppshader_res[1] = (float)screenHeight;
     SetShaderValue(post_process_shader, ppshader_resLoc, ppshader_res, SHADER_UNIFORM_VEC2);
-    
+    alpha_discard_shader = LoadShader(0, "./resources/alphadiscard.fs");
 #endif
 
     target = LoadRenderTexture(screenWidth, screenHeight);
@@ -145,6 +153,10 @@ int main(void)
     grid_model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = wall_textures;
 
     player = Player(&grid);
+    NPC* devil = new NPC(&grid, &cam, devil_texture_1);
+    devil->add_anim("WALK", new Anim({0, 1, 0, 2}, 5));
+    devil->current_anim = "WALK";
+    NPC_list.push_back(devil);
 
     cam.position = player.position;
     cam.target = Vector3Add(player.position, player.forward);
@@ -204,7 +216,11 @@ void UpdateCursor(){
 
 void UpdateDrawFrame(){
     float time = GetFrameTime();
-    player.update(time);
+    player.update(time, NPC_list);
+    for(NPC* npc : NPC_list){
+        npc->update(time, &player, NPC_list);
+    }
+
     cam.position = player.position;
     cam.target = Vector3Add(player.position, player.forward);
     
@@ -215,11 +231,27 @@ void UpdateDrawFrame(){
         ClearBackground(GRAY);
         BeginMode3D(cam);
             DrawModel(grid_model, Vector3Zeros, 1.0f, WHITE);
+            BeginShaderMode(alpha_discard_shader);
+                for(NPC* npc : NPC_list){
+                    npc->draw();
+                }
+            EndShaderMode();
         EndMode3D();
-        DrawText(TextFormat("COLLISION: %s", grid.player_collision(player.position, player.velocity, player.radius) ? "TRUE" : "FALSE"), 10, 10, 16, BLACK);
+        DrawText(TextFormat("ANGLE: %f", NPC_list[0]->angle), 10, 10, 16, BLACK);
+        DrawText(TextFormat("TIMER: %f", NPC_list[0]->timer), 10, 30, 16, BLACK);
         if(player.mouse_lock == false){
             DrawTexturePro(cursor_textures, cursor_draw_src, cursor_draw_dst, Vector2{0.0f, 0.0f}, 0.0f, WHITE);
         }
+        // draw a debug map...
+        DrawRectangle(screenWidth - 160, 0, 160, 160, WHITE);
+        Vector2 player_minimap_position{screenWidth - 160 + player.position.x * 10, player.position.z * 10};
+        Vector2 player_minimap_direction{player_minimap_position.x + player.forward.x * 10, player_minimap_position.y + player.forward.z * 10};
+        Vector2 devil_minimap_position{screenWidth - 160 + NPC_list[0]->position.x * 10, NPC_list[0]->position.z * 10};
+        Vector2 devil_minimap_direction{devil_minimap_position.x + NPC_list[0]->forward.x * 10, devil_minimap_position.y + NPC_list[0]->forward.z * 10};
+        DrawCircle(player_minimap_position.x, player_minimap_position.y, 3, GREEN);
+        DrawLineEx(player_minimap_position, player_minimap_direction, 2, GREEN);
+        DrawCircle(devil_minimap_position.x, devil_minimap_position.y, 3, RED);
+        DrawLineEx(devil_minimap_position, devil_minimap_direction, 2, RED);
     EndTextureMode();
     BeginDrawing();    
     BeginShaderMode(post_process_shader);
