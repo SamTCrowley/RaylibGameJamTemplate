@@ -69,6 +69,7 @@ Shader alpha_discard_shader = { 0 };
 static Texture2D wall_textures = { 0 };
 static Texture2D cursor_textures = { 0 };
 static Texture2D devil_texture_1 = { 0 };
+static Texture2D beezlebub_texture = { 0 };
 enum CURSOR_MODE{CURSOR_HAND, CURSOR_GRAB, CURSOR_POINT};
 CURSOR_MODE cursor_mode = CURSOR_POINT;
 Rectangle cursor_draw_src{0.0f, 0.0f, 8.0f, 8.0f};
@@ -80,6 +81,8 @@ BlockGrid grid = BlockGrid();
 Model grid_model = {0};
 Player player = Player(nullptr);
 std::vector<NPC*> NPC_list = std::vector<NPC*>();
+NPC* Devil = nullptr;
+NPC* Beezelbub = nullptr;
 
 // TODO: Define global variables here, recommended to make them static
 
@@ -113,6 +116,7 @@ int main(void)
     UnloadImage(img);
     cursor_textures = LoadTexture("resources/cursors.png");
     devil_texture_1 = LoadTexture("resources/Devil_1.png");
+    beezlebub_texture = LoadTexture("resources/BeezleBub_1.png");
     gui_font = LoadFont("resources/ConsolaMono-Bold.ttf");
     post_process_shader = LoadShader(0, "resources/PostProcessWeb.frag");
     ppshader_resLoc = GetShaderLocation(post_process_shader, "resolution");
@@ -129,6 +133,7 @@ int main(void)
     UnloadImage(img);
     cursor_textures = LoadTexture("./resources/cursors.png");
     devil_texture_1 = LoadTexture("./resources/Devil_1.png");
+    beezlebub_texture = LoadTexture("./resources/BeezleBub_1.png");
     gui_font = LoadFont("./resources/ConsolaMono-Bold.ttf");
     post_process_shader = LoadShader(0, "./resources/PostProcess.frag");
     ppshader_resLoc = GetShaderLocation(post_process_shader, "resolution");
@@ -153,10 +158,19 @@ int main(void)
     grid_model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = wall_textures;
 
     player = Player(&grid);
-    NPC* devil = new NPC(&grid, &cam, devil_texture_1);
-    devil->add_anim("WALK", new Anim({0, 1, 0, 2}, 5));
-    devil->current_anim = "WALK";
-    NPC_list.push_back(devil);
+
+    Devil = new NPC(&grid, &cam, &player, devil_texture_1, &gui_font);
+    //Devil->add_anim("WALK", new Anim({0, 1, 0, 2}, 5));
+    //Devil->current_anim = "WALK";
+    NPC_list.push_back(Devil);
+
+    Beezelbub = new NPC(&grid, &cam, &player, beezlebub_texture, &gui_font);
+    Beezelbub->position = Vector3{5.0f, 0.5, 10.0f};
+    //Beezelbub->add_anim("WALK", new Anim({0, 1, 0, 2}, 5));
+    //Beezelbub->current_anim = "WALK";
+    NPC_list.push_back(Beezelbub);
+
+
 
     cam.position = player.position;
     cam.target = Vector3Add(player.position, player.forward);
@@ -218,7 +232,7 @@ void UpdateDrawFrame(){
     float time = GetFrameTime();
     player.update(time, NPC_list);
     for(NPC* npc : NPC_list){
-        npc->update(time, &player, NPC_list);
+        npc->update(time, NPC_list);
     }
 
     cam.position = player.position;
@@ -237,8 +251,8 @@ void UpdateDrawFrame(){
                 }
             EndShaderMode();
         EndMode3D();
-        DrawText(TextFormat("ANGLE: %f", NPC_list[0]->angle), 10, 10, 16, BLACK);
-        DrawText(TextFormat("TIMER: %f", NPC_list[0]->timer), 10, 30, 16, BLACK);
+        DrawText(TextFormat("DEVIL: %s", Devil->get_state().c_str()), 10, 10, 16, BLACK);
+        DrawText(TextFormat("BEEZL: %s", Beezelbub->get_state().c_str()), 10, 30, 16, BLACK);
         if(player.mouse_lock == false){
             DrawTexturePro(cursor_textures, cursor_draw_src, cursor_draw_dst, Vector2{0.0f, 0.0f}, 0.0f, WHITE);
         }

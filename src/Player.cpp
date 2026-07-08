@@ -54,7 +54,9 @@ void Player::update(float time, std::vector<NPC*>& list){
                 collision_point.x = position.x + std::copysign(0.1f, velocity.x);
             }
         }
+
         velocity.y = 0.0f; // Y velocity should always be 0?
+        
         collision_point = Vector3{position.x, position.y, position.z + velocity.z};
         if(collision_check(collision_point, list)){
             collision_point.z = position.z + std::copysign(0.1f, velocity.z);
@@ -64,7 +66,6 @@ void Player::update(float time, std::vector<NPC*>& list){
                 collision_point.z = position.z + std::copysign(0.1f, velocity.z);
             }
         }
-
         position = Vector3Add(position, velocity);
     }
 }

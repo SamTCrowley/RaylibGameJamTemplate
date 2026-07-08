@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iostream>
 #include <string>
 #include <vector>
 #include <map>
@@ -12,6 +13,7 @@
 class NPC{
     public:
     BlockGrid* grid;
+    Player* player;
     
     Vector3 position = Vector3{2.5f, 0.5f, 2.5f};
     Vector3 velocity = Vector3{0.0f, 0.0f, 0.0f};
@@ -38,18 +40,30 @@ class NPC{
     Vector2 billboard_origin = Vector2Scale(billboard_size, 0.5f);
 
     // state machine stuff...
+    enum NPC_STATE{NPC_IDLE, NPC_WALKING};
+    std::map<NPC_STATE, std::string> state_map =std::map<NPC_STATE, std::string>();
     float timer = 0.0f;
     float time_limit = 1.0f;
-    enum NPC_STATE{NPC_IDLE, NPC_WALKING};
     NPC_STATE current_state = NPC_IDLE;
 
-    NPC(BlockGrid* bg, Camera* cam, Texture2D tex);
+    // NPC speech stuff...
+    RenderTexture2D speech_bubble = LoadRenderTexture(150, 50);
+    Font* font = nullptr;
+    int font_size = 12;
+    std::string name = "NAME";
+    std::string dialog = "DIALOG HERE";
+
+    NPC(BlockGrid* bg, Camera* cam, Player* play, Texture2D tex, Font* f);
     ~NPC();
     void add_anim(std::string s, Anim* a);
-    void update(float time, Player* player, std::vector<NPC*>& list);
+    void update(float time, std::vector<NPC*>& list);
+    void update_vectors();
     void draw();
     void set_anim_frames();
-    bool entity_collision(Vector3 point, Player* player, std::vector<NPC*>& list);
-    bool collision_check(Vector3 point, Player* player, std::vector<NPC*>& list);
+    bool entity_collision(Vector3 point, std::vector<NPC*>& list);
+    bool collision_check(Vector3 point, std::vector<NPC*>& list);
+    void set_state(NPC_STATE state);
+    std::string get_state();
+    void make_speech_bubble();
 
 };

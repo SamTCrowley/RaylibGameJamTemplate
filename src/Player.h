@@ -13,7 +13,7 @@ class Player{
     public:
     BlockGrid* grid;
     
-    Vector3 position = Vector3{8.5f, 0.5f, 8.5f};
+    Vector3 position = Vector3{8.5f, 0.3f, 8.5f};
     Vector3 velocity = Vector3{0.0f, 0.0f, 0.0f};
     float radius = 0.2f;
     float max_speed = 5.0f;
